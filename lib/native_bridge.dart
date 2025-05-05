@@ -31,7 +31,7 @@ class NativeBridge {
     }
   }
 
-  static Future<bool> processMac(String mac) async {
-    return await _channel.invokeMethod('processMac', {'mac': mac});
+  static Future<void> processMac(String mac) async {
+    await _channel.invokeMethod('processMac', {'mac': mac});
   }
 }
