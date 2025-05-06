@@ -26,7 +26,7 @@ class MainActivity : FlutterActivity(), EventChannel.StreamHandler {
         private const val PACKAGE_NAME = "com.example.demo_broadcast_03"
         private val ACTION_MAC_PROCESS_RESULT = "$PACKAGE_NAME.MAC_PROCESS_RESULT"
         private val ACTION_PERIPHERALS_JSON = "$PACKAGE_NAME.PERIPHERALS_JSON"
-        private const val LOG_TAG = "MainActivity"
+        private const val LOG_TAG = "AndroidLogMainActivity"
     }
 
     private var peripheralsEventSink: EventChannel.EventSink? = null
@@ -62,7 +62,7 @@ class MainActivity : FlutterActivity(), EventChannel.StreamHandler {
                         }
                         result.success(true)
                     } else {
-                        Log.d(LOG_TAG, "El servicio no está en ejecución")
+                        Log.d(LOG_TAG, "The service is not running")
                         result.error("SERVICE_NOT_RUNNING", "The service is not running", null)
                     }
                 }

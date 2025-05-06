@@ -33,30 +33,23 @@ import org.json.JSONObject
 
 
 class ScanerService : Service() {
-
     companion object {
-        private const val TAG = "ScanerService"
+        private const val TAG = "AndroidLogScanerService"
         private const val NOTIFICATION_ID = 1
         private const val CHANNEL_ID = "smartmuni_beacon_service"
         private const val CHANNEL_NAME = "Smart Muni Beacon Service"
-        
         private const val ACTION_PROCESS_MAC = "processMac"
         private const val PACKAGE_NAME = "com.example.demo_broadcast_03"
         private const val FLUTTER_METHOD_CHANNEL = "$PACKAGE_NAME.background_service"
         private const val BROADCAST_PERIPHERALS = "$PACKAGE_NAME.PERIPHERALS_JSON"
         private const val BROADCAST_MAC_RESULT = "$PACKAGE_NAME.MAC_PROCESS_RESULT"
-        
-        // Default values for triggers
         private const val BEACON_PASSWORD = "minew123"
         private const val TRIGGER_SLOT = 2
         private const val TRIGGER_CONDITION_MS = 5000
     }
 
-    // Flutter integration
     private lateinit var flutterEngine: FlutterEngine
     private lateinit var methodChannel: MethodChannel
-    
-    // Bluetooth management
     private lateinit var centralManager: MTCentralManager
     private val discoveredPeripherals = mutableListOf<MTPeripheral>()
 
@@ -68,6 +61,7 @@ class ScanerService : Service() {
         initializeBluetoothManager()
     }
 
+    // Inicializa el motor de Flutter
     private fun initializeFlutterEngine() {
         flutterEngine = FlutterEngine(this)
         flutterEngine.dartExecutor.executeDartEntrypoint(
@@ -76,6 +70,7 @@ class ScanerService : Service() {
         methodChannel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, FLUTTER_METHOD_CHANNEL)
     }
 
+    // Crea el canal de notificación para el servicio en segundo plano
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
@@ -88,6 +83,7 @@ class ScanerService : Service() {
         }
     }
 
+    // Inicia el servicio en primer plano
     private fun startForegroundService() {
         val notification: Notification = NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle("Emergency Button Scanner")
@@ -98,6 +94,7 @@ class ScanerService : Service() {
         startForeground(NOTIFICATION_ID, notification)
     }
 
+    // Inicializa el administrador de Bluetooth
     private fun initializeBluetoothManager() {
         centralManager = MTCentralManager.getInstance(this)
         centralManager.startService()
@@ -113,10 +110,10 @@ class ScanerService : Service() {
                 }
             }
         }
-        
         return START_STICKY
     }
 
+    // Inicia el escaneo de dispositivos Bluetooth
     private fun startScanning() {
         if (!centralManager.isScanning()) {
             Log.d(TAG, "Starting BLE scan")
@@ -132,6 +129,7 @@ class ScanerService : Service() {
         }
     }
 
+    // Maneja los periféricos descubiertos y los convierte en un JSON
     private fun handleDiscoveredPeripherals(peripherals: List<MTPeripheral>) {
         discoveredPeripherals.clear()
         discoveredPeripherals.addAll(peripherals)
@@ -140,6 +138,7 @@ class ScanerService : Service() {
         broadcastPeripherals(peripheralsJson)
     }
 
+    // Convierte los periféricos descubiertos en un objeto JSON
     private fun convertPeripheralsToJson(): JSONArray {
         val jsonArray = JSONArray()
 
@@ -150,7 +149,6 @@ class ScanerService : Service() {
                 put("name", handler.getName() ?: JSONObject.NULL)
             }
 
-            // Extract URL from frames if available
             val advFrames: ArrayList<MinewFrame> = handler.getAdvFrames()
             for (frame in advFrames) {
                 if (frame.getFrameType() == FrameType.FrameURL) {
@@ -162,10 +160,10 @@ class ScanerService : Service() {
             jsonArray.put(deviceJson)
             Log.d(TAG, "Device found: $deviceJson")
         }
-        
         return jsonArray
     }
 
+    // Envía los periféricos descubiertos como un broadcast
     private fun broadcastPeripherals(peripheralsJson: JSONArray) {
         val broadcastIntent = Intent(BROADCAST_PERIPHERALS).apply {
             putExtra("peripherals", peripheralsJson.toString())
@@ -174,6 +172,7 @@ class ScanerService : Service() {
         sendBroadcast(broadcastIntent)
     }
 
+    // Detiene el escaneo de Bluetooth
     private fun stopScanning() {
         if (centralManager.isScanning()) {
             Log.d(TAG, "Stopping BLE scan")
@@ -181,10 +180,10 @@ class ScanerService : Service() {
         }
     }
 
+    // Procesa una dirección MAC específica
     private fun processMacAddress(macAddress: String) {
         Log.d(TAG, "Processing MAC: $macAddress")
         
-        // Find the peripheral with the specific MAC
         val targetPeripheral = discoveredPeripherals.find { peripheral ->
             peripheral.mMTFrameHandler.getMac() == macAddress
         }
@@ -197,11 +196,11 @@ class ScanerService : Service() {
         }
     }
 
+    // Conecta al periférico con la MAC proporcionada
     private fun connectToPeripheral(peripheral: MTPeripheral) {
         Log.d(TAG, "Connecting to peripheral: ${peripheral.mMTFrameHandler.getMac()}")
         val mainHandler = Handler(Looper.getMainLooper())
         
-        // Stop scanning while connecting
         stopScanning()
         
         centralManager.connect(peripheral, object : ConnectionStatueListener {
@@ -218,6 +217,7 @@ class ScanerService : Service() {
         })
     }
 
+    // Maneja el estado de la conexión con el periférico
     private fun handleConnectionStatus(
         status: ConnectionStatus, 
         passwordListener: GetPasswordListener?,
@@ -243,6 +243,7 @@ class ScanerService : Service() {
         }
     }
 
+    // Configura el trigger de doble toque en el periférico
     private fun configureDoubleTapTrigger(peripheral: MTPeripheral) {
         try {
             val connectionHandler = peripheral.mMTConnectionHandler
@@ -268,14 +269,13 @@ class ScanerService : Service() {
         }
     }
 
+    // Reinicia el escaneo y transmite el resultado
     private fun resumeScanningAndBroadcastResult(success: Boolean) {
-        // Restart scanning
         centralManager.startScan()
-        
-        // Broadcast the result
         broadcastProcessResult(success)
     }
 
+    // Envía el resultado del procesamiento de la MAC
     private fun broadcastProcessResult(success: Boolean) {
         val resultIntent = Intent(BROADCAST_MAC_RESULT).apply {
             putExtra("success", success)
