@@ -47,13 +47,17 @@ class ScanerService : Service() {
         private const val BEACON_PASSWORD = "minew123"
         private const val TRIGGER_SLOT = 2
         private const val TRIGGER_CONDITION_MS = 5000
+        private const val CLEAR_SCANNING_DELAY_MS = 5000L
     }
 
     private lateinit var flutterEngine: FlutterEngine
     private lateinit var methodChannel: MethodChannel
     private lateinit var centralManager: MTCentralManager
     private val discoveredPeripherals = mutableListOf<MTPeripheral>()
-
+    private val mainHandler = Handler(Looper.getMainLooper())
+    private var clearScanningRunnable: Runnable? = null
+    private var isClearScanningScheduled = false
+    
     override fun onCreate() {
         super.onCreate()
         initializeFlutterEngine()
@@ -161,6 +165,7 @@ class ScanerService : Service() {
                     val urlFrame = frame as UrlFrame
                     deviceJson.put("url", urlFrame.getUrlString())
                     onScanerDoubleTapDetected(handler.getMac())
+                    scheduleClearScanning()
                 }
             }
 
@@ -168,6 +173,24 @@ class ScanerService : Service() {
             Log.d(TAG, "Device found: $deviceJson")
         }
         return jsonArray
+    }
+
+    // Programa la llamada a clearScanning después de 5 segundos, solo si no está ya programada
+    private fun scheduleClearScanning() {
+        if (!isClearScanningScheduled) {
+            isClearScanningScheduled = true
+            Log.d(TAG, "Scheduling clearScanning in 5 seconds")
+            
+            // Crear un nuevo Runnable que ejecutará clearScanning
+            clearScanningRunnable = Runnable {
+                Log.d(TAG, "Executing scheduled clearScanning")
+                clearScanning()
+                isClearScanningScheduled = false
+            }
+            
+            // Programar el Runnable para ejecutarse después de 5 segundos
+            mainHandler.postDelayed(clearScanningRunnable!!, CLEAR_SCANNING_DELAY_MS)
+        }
     }
 
     // Envía los periféricos descubiertos como un broadcast

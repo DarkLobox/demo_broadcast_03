@@ -1,3 +1,4 @@
+import 'package:demo_broadcast_03/storage_util.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'package:vibration/vibration.dart';
@@ -41,33 +42,41 @@ class NativeBridge {
   }
 
   static void init() {
-  _channel.setMethodCallHandler((call) async {
-    if (call.method == "onScanerDoubleTapDetected") {
-      final String mac = call.arguments as String;
-      await onScanerDoubleTapDetected(mac);
-    }
-  });
-}
+    _channel.setMethodCallHandler((call) async {
+      if (call.method == "onScanerDoubleTapDetected") {
+        final String mac = call.arguments as String;
+        await onScanerDoubleTapDetected(mac);
+      }
+    });
+  }
 
   static Future<void> onScanerDoubleTapDetected(String macAddress) async {
-    if (await Vibration.hasVibrator()) {
-      try {
-        await Vibration.vibrate();
-      } catch (e) {
-        debugPrint("Error al vibrar: $e");
-      }
-    }
-    print('--- Alerta enviada desde $macAddress');
+    const flagKey = 'beacon_flag';
+    const dateKey = 'beacon_date';
 
-    /* Position currentPosition = await Geolocator.getCurrentPosition();
-    var response = await IncidentService.createAlertFast(
-      latitude: currentPosition.latitude,
-      longitude: currentPosition.longitude,
-    );
-    if (response['status']) {
-      print('--- Alerta enviada: $response');
-    } else {
-      print('--- Error al enviar alerta $response');
-    } */
+    final flag = await StorageUtil.getFlag(flagKey);
+    if (flag) return;
+
+    await StorageUtil.saveFlag(flagKey, true);
+
+    final lastDate = await StorageUtil.getDate(dateKey);
+    final now = DateTime.now();
+
+    final shouldVibrate =
+        lastDate == null || now.difference(lastDate).inSeconds >= 6;
+    if (shouldVibrate) {
+      if (await Vibration.hasVibrator()) {
+        try {
+          await Vibration.vibrate();
+        } catch (e) {
+          debugPrint("Error al vibrar: $e");
+        }
+      }
+
+      print('--- Alerta enviada desde $macAddress');
+      await StorageUtil.saveDate(dateKey, now);
+    }
+
+    await StorageUtil.saveFlag(flagKey, false);
   }
 }

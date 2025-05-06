@@ -195,44 +195,40 @@ class _MainAppState extends State<MainApp> {
                 },
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                ElevatedButton(
+                  onPressed: () async {
+                    if (!hasBluetoothPermissions) return;
+                    if (isServiceRunning) {
+                      stopListening();
+                      await NativeBridge.stopBackgroundService();
+                    } else {
+                      await NativeBridge.startBackgroundService();
+                      startListening();
+                    }
+                    isServiceRunning = await NativeBridge.isServiceRunning();
+                    setState(() {});
+                  },
+                  child: Text(
+                      isServiceRunning ? 'Detener Escaner' : 'Iniciar Escaner'),
+                ),
+                ElevatedButton(
+                  onPressed: () async {
+                    if (!hasBluetoothPermissions) return;
+                    if (isServiceRunning) {
+                      await NativeBridge.clearScanning();
+                    }
+                  },
+                  child: const Text('Limpiar'),
+                ),
+                if (!hasBluetoothPermissions)
                   ElevatedButton(
-                    onPressed: () async {
-                      if (!hasBluetoothPermissions) return;
-                      if (isServiceRunning) {
-                        stopListening();
-                        await NativeBridge.stopBackgroundService();
-                      } else {
-                        await NativeBridge.startBackgroundService();
-                        startListening();
-                      }
-                      isServiceRunning = await NativeBridge.isServiceRunning();
-                      setState(() {});
-                    },
-                    child: Text(isServiceRunning
-                        ? 'Detener Escaner'
-                        : 'Iniciar Escaner'),
+                    onPressed: solicitarPermisosBluetooth,
+                    child: const Text('Bluetooh Permission'),
                   ),
-                  ElevatedButton(
-                    onPressed: () async {
-                      if (!hasBluetoothPermissions) return;
-                      if (isServiceRunning) {
-                        await NativeBridge.clearScanning();
-                      }
-                    },
-                    child: const Text('Limpiar'),
-                  ),
-                  if (!hasBluetoothPermissions)
-                    ElevatedButton(
-                      onPressed: solicitarPermisosBluetooth,
-                      child: const Text('Bluetooh Permission'),
-                    ),
-                ],
-              ),
+              ],
             ),
           ],
         ),

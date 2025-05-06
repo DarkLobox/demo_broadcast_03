@@ -16,11 +16,9 @@ class StorageUtil {
     await prefs.setString(key, value.toIso8601String());
   }
 
-  static Future<DateTime> getDate(String key) async {
+  static Future<DateTime?> getDate(String key) async {
     final prefs = await SharedPreferences.getInstance();
     final dateString = prefs.getString(key);
-    return dateString != null
-        ? DateTime.tryParse(dateString) ?? DateTime.now()
-        : DateTime.now();
+    return dateString != null ? DateTime.tryParse(dateString) : null;
   }
 }
