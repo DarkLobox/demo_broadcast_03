@@ -266,8 +266,9 @@ class ScanerService : Service() {
                 Log.d(TAG, "Status: COMPLETED")
                 onSaveMac(peripheral.mMTFrameHandler.getMac())
                 configureDoubleTapTrigger(peripheral)
-                centralManager.disconnect(peripheral)
-                hardReset(true)
+            }
+            ConnectionStatus.DISCONNECTED -> {
+                Log.d(TAG, "Status: DISCONNECTED")
             }
             else -> {
                 Log.d(TAG, "Other connection status: $status")
@@ -291,13 +292,20 @@ class ScanerService : Service() {
                 override fun onSetTrigger(success: Boolean, exception: MTException?) {
                     if (success) {
                         Log.d(TAG, "Successfully configured double-tap trigger for slot $TRIGGER_SLOT")
+                        centralManager.disconnect(peripheral)
+                        hardReset(true)
                     } else {
                         Log.e(TAG, "Failed to configure trigger: ${exception?.message}")
+                        centralManager.disconnect(peripheral)
+                        hardReset(false)
                     }
                 }
             })
+
         } catch (e: Exception) {
             Log.e(TAG, "Error configuring trigger: ${e.message}")
+            centralManager.disconnect(peripheral)
+            hardReset(false)
         }
         
     }
@@ -372,11 +380,11 @@ class ScanerService : Service() {
     }
 
     override fun onDestroy() {
+        super.onDestroy()
         stopScanning()
         centralManager.stopService()
         centralManager.clear()
         flutterEngine.destroy()
-        super.onDestroy()
     }
 
     override fun onBind(intent: Intent?): IBinder? = null

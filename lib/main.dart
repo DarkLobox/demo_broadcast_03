@@ -79,7 +79,16 @@ class _MainAppState extends State<MainApp> {
             : "Procesamiento fallido para $processingMac";
         isProcessing = false;
       });
+      //Reset service
+      //resetService();
     });
+  }
+
+  resetService() async {
+    if (await NativeBridge.isServiceRunning()) {
+      await NativeBridge.stopBackgroundService();
+      await NativeBridge.startBackgroundService();
+    }
   }
 
   stopListening() {
