@@ -1,9 +1,9 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:demo_broadcast_03/native_bridge.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:async';
-
 import 'package:permission_handler/permission_handler.dart';
 
 const _eventChannel = EventChannel('peripherals_stream');
@@ -11,6 +11,15 @@ const _macProcessResultStream = EventChannel('mac_process_result_stream');
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  if (Platform.isAndroid) {
+    try {
+      NativeBridge.init();
+    } catch (e) {
+      print('--- Error al iniciar el servicio background');
+    }
+  }
+
   runApp(const MainApp());
 }
 

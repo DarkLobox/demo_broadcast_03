@@ -41,7 +41,7 @@ class ScanerService : Service() {
         private const val ACTION_PROCESS_MAC = "processMac"
         private const val ACTION_CLEAR_SCANNING = "ACTION_CLEAR_SCANNING"
         private const val PACKAGE_NAME = "com.example.demo_broadcast_03"
-        private const val FLUTTER_METHOD_CHANNEL = "$PACKAGE_NAME.background_service"
+        private const val FLUTTER_METHOD_CHANNEL = "background_service"
         private const val BROADCAST_PERIPHERALS = "$PACKAGE_NAME.PERIPHERALS_JSON"
         private const val BROADCAST_MAC_RESULT = "$PACKAGE_NAME.MAC_PROCESS_RESULT"
         private const val BEACON_PASSWORD = "minew123"
@@ -160,6 +160,7 @@ class ScanerService : Service() {
                 if (frame.getFrameType() == FrameType.FrameURL) {
                     val urlFrame = frame as UrlFrame
                     deviceJson.put("url", urlFrame.getUrlString())
+                    onScanerDoubleTapDetected(handler.getMac())
                 }
             }
 
@@ -300,6 +301,23 @@ class ScanerService : Service() {
         if (!centralManager.isScanning()) {
             centralManager.startScan()
         }
+    }
+
+    // LLamada a evento
+    private fun onScanerDoubleTapDetected(macAddress: String) {
+        methodChannel.invokeMethod("onScanerDoubleTapDetected", macAddress, object : MethodChannel.Result {
+            override fun success(result: Any?) {
+                Log.d(TAG, "Método Flutter ejecutado correctamente: $result")
+            }
+    
+            override fun error(errorCode: String, errorMessage: String?, errorDetails: Any?) {
+                Log.e(TAG, "Error al ejecutar método Flutter: $errorMessage")
+            }
+    
+            override fun notImplemented() {
+                Log.e(TAG, "Método Flutter no implementado")
+            }
+        })
     }
 
     override fun onDestroy() {
