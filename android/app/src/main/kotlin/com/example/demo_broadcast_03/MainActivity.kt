@@ -19,6 +19,7 @@ class MainActivity : FlutterActivity(), EventChannel.StreamHandler {
         private const val MAC_RESULT_EVENT_CHANNEL = "mac_process_result_stream"
 
         private const val ACTION_PROCESS_MAC = "processMac"
+        private const val ACTION_CLEAR_SCANNING = "ACTION_CLEAR_SCANNING"
         private const val EXTRA_MAC = "mac"
         private const val EXTRA_PERIPHERALS = "peripherals"
         private const val EXTRA_SUCCESS = "success"
@@ -62,7 +63,17 @@ class MainActivity : FlutterActivity(), EventChannel.StreamHandler {
                         }
                         result.success(true)
                     } else {
-                        Log.d(LOG_TAG, "The service is not running")
+                        result.error("SERVICE_NOT_RUNNING", "The service is not running", null)
+                    }
+                }
+                "clearScanning" -> {
+                    if (isServiceRunning(ScanerService::class.java)) {
+                        Intent(this, ScanerService::class.java).apply {
+                            action = ACTION_CLEAR_SCANNING
+                            startService(this)
+                        }
+                        result.success(true)
+                    } else {
                         result.error("SERVICE_NOT_RUNNING", "The service is not running", null)
                     }
                 }

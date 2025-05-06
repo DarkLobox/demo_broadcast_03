@@ -208,6 +208,15 @@ class _MainAppState extends State<MainApp> {
                         ? 'Detener Escaner'
                         : 'Iniciar Escaner'),
                   ),
+                  ElevatedButton(
+                    onPressed: () async {
+                      if (!hasBluetoothPermissions) return;
+                      if (isServiceRunning) {
+                        await NativeBridge.clearScanning();
+                      }
+                    },
+                    child: const Text('Limpiar'),
+                  ),
                   if (!hasBluetoothPermissions)
                     ElevatedButton(
                       onPressed: solicitarPermisosBluetooth,

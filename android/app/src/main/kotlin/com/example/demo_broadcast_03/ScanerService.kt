@@ -39,6 +39,7 @@ class ScanerService : Service() {
         private const val CHANNEL_ID = "smartmuni_beacon_service"
         private const val CHANNEL_NAME = "Smart Muni Beacon Service"
         private const val ACTION_PROCESS_MAC = "processMac"
+        private const val ACTION_CLEAR_SCANNING = "ACTION_CLEAR_SCANNING"
         private const val PACKAGE_NAME = "com.example.demo_broadcast_03"
         private const val FLUTTER_METHOD_CHANNEL = "$PACKAGE_NAME.background_service"
         private const val BROADCAST_PERIPHERALS = "$PACKAGE_NAME.PERIPHERALS_JSON"
@@ -103,10 +104,15 @@ class ScanerService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         intent?.let {
-            if (it.action == ACTION_PROCESS_MAC) {
-                val macAddress = it.getStringExtra("mac")
-                if (!macAddress.isNullOrBlank()) {
-                    processMacAddress(macAddress)
+            when (it.action) {
+                ACTION_PROCESS_MAC -> {
+                    val macAddress = it.getStringExtra("mac")
+                    if (!macAddress.isNullOrBlank()) {
+                        processMacAddress(macAddress)
+                    }
+                }
+                ACTION_CLEAR_SCANNING -> {
+                    clearScanning()
                 }
             }
         }
@@ -284,9 +290,22 @@ class ScanerService : Service() {
         sendBroadcast(resultIntent)
     }
 
+    // Limpia la cache del escaner
+    private fun clearScanning() {
+        Log.d(TAG, "Clear BLE scan")
+        if (centralManager.isScanning()) {
+            centralManager.stopScan()
+        }
+        centralManager.clear()
+        if (!centralManager.isScanning()) {
+            centralManager.startScan()
+        }
+    }
+
     override fun onDestroy() {
         stopScanning()
         centralManager.stopService()
+        centralManager.clear()
         flutterEngine.destroy()
         super.onDestroy()
     }
