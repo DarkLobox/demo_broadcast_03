@@ -242,7 +242,8 @@ class ScanerService : Service() {
                 
             override fun onError(exception: MTException) {
                 Log.e(TAG, "Connection error: ${exception.message}")
-                resumeScanningAndBroadcastResult(false)
+                centralManager.disconnect(peripheral)
+                hardReset(false)
             }
         })
     }
@@ -266,7 +267,7 @@ class ScanerService : Service() {
                 onSaveMac(peripheral.mMTFrameHandler.getMac())
                 configureDoubleTapTrigger(peripheral)
                 centralManager.disconnect(peripheral)
-                resumeScanningAndBroadcastResult(true)
+                hardReset(true)
             }
             else -> {
                 Log.d(TAG, "Other connection status: $status")
@@ -298,6 +299,16 @@ class ScanerService : Service() {
         } catch (e: Exception) {
             Log.e(TAG, "Error configuring trigger: ${e.message}")
         }
+        
+    }
+
+    // Reinicia el escaneo y transmite el resultado
+    private fun hardReset(success: Boolean) {
+        stopScanning()
+        centralManager.clear()
+        centralManager.stopService()
+        centralManager.startService()
+        resumeScanningAndBroadcastResult(success)
     }
 
     // Reinicia el escaneo y transmite el resultado
