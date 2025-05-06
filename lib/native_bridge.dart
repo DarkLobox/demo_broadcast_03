@@ -47,12 +47,23 @@ class NativeBridge {
         final String mac = call.arguments as String;
         await onScanerDoubleTapDetected(mac);
       }
+      if (call.method == "onSaveMac") {
+        final String mac = call.arguments as String;
+        await onSaveMac(mac);
+      }
     });
+  }
+
+  static Future<void> onSaveMac(String macAddress) async {
+    const macKey = 'beacon_mac';
+    await StorageUtil.saveMacAddress(macKey, macAddress);
+    print('--- MAC guardada $macAddress');
   }
 
   static Future<void> onScanerDoubleTapDetected(String macAddress) async {
     const flagKey = 'beacon_flag';
     const dateKey = 'beacon_date';
+    const macKey = 'beacon_mac';
 
     final flag = await StorageUtil.getFlag(flagKey);
     if (flag) return;
@@ -60,10 +71,12 @@ class NativeBridge {
     await StorageUtil.saveFlag(flagKey, true);
 
     final lastDate = await StorageUtil.getDate(dateKey);
+    final savedMac = await StorageUtil.getMacAddress(macKey);
     final now = DateTime.now();
 
-    final shouldVibrate =
-        lastDate == null || now.difference(lastDate).inSeconds >= 6;
+    final shouldVibrate = (savedMac == macAddress) &&
+        (lastDate == null || now.difference(lastDate).inSeconds >= 6);
+
     if (shouldVibrate) {
       if (await Vibration.hasVibrator()) {
         try {

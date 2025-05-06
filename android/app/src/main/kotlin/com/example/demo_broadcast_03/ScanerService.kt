@@ -263,6 +263,7 @@ class ScanerService : Service() {
             }
             ConnectionStatus.COMPLETED -> {
                 Log.d(TAG, "Status: COMPLETED")
+                onSaveMac(peripheral.mMTFrameHandler.getMac())
                 configureDoubleTapTrigger(peripheral)
                 centralManager.disconnect(peripheral)
                 resumeScanningAndBroadcastResult(true)
@@ -330,15 +331,31 @@ class ScanerService : Service() {
     private fun onScanerDoubleTapDetected(macAddress: String) {
         methodChannel.invokeMethod("onScanerDoubleTapDetected", macAddress, object : MethodChannel.Result {
             override fun success(result: Any?) {
-                Log.d(TAG, "Método Flutter ejecutado correctamente: $result")
+                Log.d(TAG, "Método Flutter ejecutado correctamente onScanerDoubleTapDetected: $result")
             }
     
             override fun error(errorCode: String, errorMessage: String?, errorDetails: Any?) {
-                Log.e(TAG, "Error al ejecutar método Flutter: $errorMessage")
+                Log.e(TAG, "Error al ejecutar método Flutter onScanerDoubleTapDetected: $errorMessage")
             }
     
             override fun notImplemented() {
-                Log.e(TAG, "Método Flutter no implementado")
+                Log.e(TAG, "Método Flutter no implementado onScanerDoubleTapDetected")
+            }
+        })
+    }
+
+    private fun onSaveMac(macAddress: String) {
+        methodChannel.invokeMethod("onSaveMac", macAddress, object : MethodChannel.Result {
+            override fun success(result: Any?) {
+                Log.d(TAG, "Método Flutter ejecutado correctamente onSaveMac: $result")
+            }
+    
+            override fun error(errorCode: String, errorMessage: String?, errorDetails: Any?) {
+                Log.e(TAG, "Error al ejecutar método Flutter onSaveMac: $errorMessage")
+            }
+    
+            override fun notImplemented() {
+                Log.e(TAG, "Método Flutter no implementado onSaveMac")
             }
         })
     }

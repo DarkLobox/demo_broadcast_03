@@ -21,4 +21,14 @@ class StorageUtil {
     final dateString = prefs.getString(key);
     return dateString != null ? DateTime.tryParse(dateString) : null;
   }
+
+  static Future<void> saveMacAddress(String key, String mac) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(key, mac);
+  }
+
+  static Future<String> getMacAddress(String key) async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(key) ?? "";
+  }
 }
