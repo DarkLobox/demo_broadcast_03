@@ -26,13 +26,28 @@ class _MainAppState extends State<MainApp> {
   String processingResult = "";
   String processingMac = "";
   bool isProcessing = false;
+  bool isServiceRunning = false;
+  bool hasBluetoothPermissions = false;
 
   StreamSubscription? broadCastSuscription;
   StreamSubscription? macResultSubscription;
 
   @override
   void initState() {
+    init();
     super.initState();
+  }
+
+  init() async {
+    await checkBluetoohPermissions();
+  }
+
+  checkBluetoohPermissions() async {
+    if (await Permission.bluetoothScan.isGranted &&
+        await Permission.bluetoothConnect.isGranted) {
+      hasBluetoothPermissions = true;
+      setState(() {});
+    }
   }
 
   startListening() {
@@ -75,13 +90,15 @@ class _MainAppState extends State<MainApp> {
     await NativeBridge.processMac(mac);
   }
 
-  Future<void> solicitarPermisosBluetooth() async {
+  solicitarPermisosBluetooth() async {
     if (await Permission.location.request().isGranted) {
       await [
         Permission.bluetoothScan,
         Permission.bluetoothConnect,
       ].request();
     }
+
+    await checkBluetoohPermissions();
   }
 
   @override
@@ -176,21 +193,26 @@ class _MainAppState extends State<MainApp> {
                 children: [
                   ElevatedButton(
                     onPressed: () async {
-                      final isRunning = await NativeBridge.isServiceRunning();
-                      if (isRunning) {
+                      if (!hasBluetoothPermissions) return;
+                      if (isServiceRunning) {
                         stopListening();
                         await NativeBridge.stopBackgroundService();
                       } else {
                         await NativeBridge.startBackgroundService();
                         startListening();
                       }
+                      isServiceRunning = await NativeBridge.isServiceRunning();
+                      setState(() {});
                     },
-                    child: const Text('Toggle Service'),
+                    child: Text(isServiceRunning
+                        ? 'Detener Escaner'
+                        : 'Iniciar Escaner'),
                   ),
-                  ElevatedButton(
-                    onPressed: solicitarPermisosBluetooth,
-                    child: const Text('Bluetooh Permission'),
-                  ),
+                  if (!hasBluetoothPermissions)
+                    ElevatedButton(
+                      onPressed: solicitarPermisosBluetooth,
+                      child: const Text('Bluetooh Permission'),
+                    ),
                 ],
               ),
             ),
