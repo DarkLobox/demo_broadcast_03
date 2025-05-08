@@ -1,10 +1,13 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:android_intent_plus/android_intent.dart';
+import 'package:android_intent_plus/flag.dart';
 import 'package:demo_broadcast_03/native_bridge.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:async';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:device_info_plus/device_info_plus.dart';
 
 const _eventChannel = EventChannel('peripherals_stream');
 const _macProcessResultStream = EventChannel('mac_process_result_stream');
@@ -49,6 +52,8 @@ class _MainAppState extends State<MainApp> {
 
   init() async {
     await checkBluetoohPermissions();
+    await requestIgnoreBatteryOptimizationsIntent();
+    await requestLocationAlways();
   }
 
   checkBluetoohPermissions() async {
@@ -57,6 +62,47 @@ class _MainAppState extends State<MainApp> {
       hasBluetoothPermissions = true;
       setState(() {});
     }
+  }
+
+  Future<bool> isIgnoringBatteryOptimizations() async {
+    if (!Platform.isAndroid) return true;
+
+    const platform = MethodChannel('battery_optimizations');
+
+    try {
+      return await platform.invokeMethod('isIgnoringBatteryOptimizations');
+    } on PlatformException catch (e) {
+      print('Error checking battery optimizations: $e');
+      return true;
+    }
+  }
+
+  requestIgnoreBatteryOptimizationsIntent() async {
+    if (!Platform.isAndroid) return;
+
+    final isIgnoring = await isIgnoringBatteryOptimizations();
+    if (!isIgnoring) {
+      final info = await DeviceInfoPlugin().androidInfo;
+      final sdkInt = info.version.sdkInt;
+      const packageName = 'com.example.demo_broadcast_03';
+
+      if (sdkInt >= 23) {
+        const intent = AndroidIntent(
+          action: 'android.settings.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS',
+          data: 'package:$packageName',
+          flags: <int>[Flag.FLAG_ACTIVITY_NEW_TASK],
+        );
+        await intent.launch();
+      }
+    }
+  }
+
+  requestLocationAlways() async {
+    if (await Permission.locationWhenInUse.request().isGranted) {
+      final statusAlways = await Permission.locationAlways.request();
+      return statusAlways.isGranted;
+    }
+    return false;
   }
 
   startListening() {

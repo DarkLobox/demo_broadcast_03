@@ -353,10 +353,8 @@ class ScanerService : Service() {
             centralManager.stopScan()
         }
         centralManager.clear()
-        if (!centralManager.isScanning()) {
-            centralManager.startScan()
-            Log.d(TAG, "Scaner Iniciado")
-        }
+        startScanning()
+        Log.d(TAG, "Scaner Iniciado")
     }
 
     // LLamada a evento
@@ -393,6 +391,7 @@ class ScanerService : Service() {
     }
 
     override fun onDestroy() {
+        Log.d(TAG, "On Destroy")
         super.onDestroy()
         stopScanning()
         centralManager.stopService()

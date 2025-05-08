@@ -11,10 +11,12 @@ import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.EventChannel
 import io.flutter.plugin.common.MethodChannel
+import android.os.PowerManager
 
 class MainActivity : FlutterActivity(), EventChannel.StreamHandler {
     companion object {
         private const val METHOD_CHANNEL = "background_service"
+        private const val BATTERY_OPT_CHANNEL = "battery_optimizations"
         private const val PERIPHERALS_EVENT_CHANNEL = "peripherals_stream"
         private const val MAC_RESULT_EVENT_CHANNEL = "mac_process_result_stream"
 
@@ -78,6 +80,17 @@ class MainActivity : FlutterActivity(), EventChannel.StreamHandler {
                     }
                 }
                 else -> result.notImplemented()
+            }
+        }
+
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, BATTERY_OPT_CHANNEL).setMethodCallHandler {
+            call, result ->
+            if (call.method == "isIgnoringBatteryOptimizations") {
+                val pm = getSystemService(POWER_SERVICE) as PowerManager
+                val isIgnoring = pm.isIgnoringBatteryOptimizations(packageName)
+                result.success(isIgnoring)
+            } else {
+                result.notImplemented()
             }
         }
 
