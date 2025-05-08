@@ -25,6 +25,8 @@ import com.minew.beaconplus.sdk.interfaces.GetPasswordListener
 import com.minew.beaconplus.sdk.interfaces.MTCentralManagerListener
 import com.minew.beaconplus.sdk.interfaces.SetTriggerListener
 import com.minew.beaconplus.sdk.model.Trigger
+import com.minew.beaconplus.sdk.enums.BluetoothState
+import com.minew.beaconplus.sdk.interfaces.OnBluetoothStateChangedListener
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.embedding.engine.dart.DartExecutor
 import io.flutter.plugin.common.MethodChannel
@@ -102,6 +104,16 @@ class ScanerService : Service() {
     // Inicializa el administrador de Bluetooth
     private fun initializeBluetoothManager() {
         centralManager = MTCentralManager.getInstance(this)
+        centralManager.setBluetoothChangedListener(object : OnBluetoothStateChangedListener {
+            override fun onStateChanged(state: BluetoothState) {
+                if (state == BluetoothState.BluetoothStatePowerOn) {
+                    Log.v(TAG, "Encendido: $state")
+                } else if (state == BluetoothState.BluetoothStatePowerOff) {
+                    Log.v(TAG, "Apagado: $state")
+                }
+            }
+        })
+
         centralManager.startService()
         startScanning()
     }
@@ -343,6 +355,7 @@ class ScanerService : Service() {
         centralManager.clear()
         if (!centralManager.isScanning()) {
             centralManager.startScan()
+            Log.d(TAG, "Scaner Iniciado")
         }
     }
 
