@@ -4,8 +4,10 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.Service
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.os.Build
 import android.os.Handler
 import android.os.IBinder
@@ -32,6 +34,8 @@ import io.flutter.embedding.engine.dart.DartExecutor
 import io.flutter.plugin.common.MethodChannel
 import org.json.JSONArray
 import org.json.JSONObject
+
+
 
 
 class ScanerService : Service() {
@@ -66,6 +70,17 @@ class ScanerService : Service() {
         createNotificationChannel()
         startForegroundService()
         initializeBluetoothManager()
+        val filter = IntentFilter(Intent.ACTION_SCREEN_OFF)
+        registerReceiver(screenOffReceiver, filter)
+    }
+
+    private val screenOffReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            if (intent.action == Intent.ACTION_SCREEN_OFF) {
+                Log.d(TAG, "La pantalla se apagó")
+                clearScanning()
+            }
+        }
     }
 
     // Inicializa el motor de Flutter
@@ -396,6 +411,7 @@ class ScanerService : Service() {
         stopScanning()
         centralManager.stopService()
         centralManager.clear()
+        unregisterReceiver(screenOffReceiver)
         flutterEngine.destroy()
     }
 
