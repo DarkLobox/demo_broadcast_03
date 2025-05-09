@@ -131,9 +131,9 @@ class _MainAppState extends State<MainApp> {
   }
 
   resetService() async {
-    if (await NativeBridge.isServiceRunning()) {
-      await NativeBridge.stopBackgroundService();
-      await NativeBridge.startBackgroundService();
+    if (await NativeBridge.isScanerServiceRunning()) {
+      await NativeBridge.stopScanerService();
+      await NativeBridge.startScanerService();
     }
   }
 
@@ -258,12 +258,12 @@ class _MainAppState extends State<MainApp> {
                     if (!hasBluetoothPermissions) return;
                     if (isServiceRunning) {
                       stopListening();
-                      await NativeBridge.stopBackgroundService();
+                      await NativeBridge.stopScanerService();
                     } else {
-                      await NativeBridge.startBackgroundService();
+                      await NativeBridge.startScanerService();
                       startListening();
                     }
-                    isServiceRunning = await NativeBridge.isServiceRunning();
+                    isServiceRunning = await NativeBridge.isScanerServiceRunning();
                     setState(() {});
                   },
                   child: Text(

@@ -6,7 +6,7 @@ import 'package:vibration/vibration.dart';
 class NativeBridge {
   static const MethodChannel _channel = MethodChannel('background_service');
 
-  static Future<void> startBackgroundService() async {
+  static Future<void> startScanerService() async {
     try {
       await _channel.invokeMethod('startService');
     } catch (e) {
@@ -14,7 +14,7 @@ class NativeBridge {
     }
   }
 
-  static Future<void> stopBackgroundService() async {
+  static Future<void> stopScanerService() async {
     try {
       await _channel.invokeMethod('stopService');
     } catch (e) {
@@ -22,7 +22,7 @@ class NativeBridge {
     }
   }
 
-  static Future<bool> isServiceRunning() async {
+  static Future<bool> isScanerServiceRunning() async {
     try {
       final bool isRunning = await _channel.invokeMethod('isServiceRunning');
       debugPrint("Estado del servicio background: $isRunning");
